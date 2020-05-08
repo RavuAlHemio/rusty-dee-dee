@@ -5,6 +5,9 @@ use std::fs::OpenOptions;
 use std::process::exit;
 use std::str::FromStr;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::fs::OpenOptionsExt;
+
 use getopts::{Matches, Options};
 
 #[cfg(target_os = "windows")]
@@ -24,7 +27,7 @@ fn output_global_usage(prog_name: &str) {
     eprintln!("  dd      Copy data.");
 
     eprintln!("");
-    eprintln!("To obtain usget_windows_disksut a command, call it and pass --help");
+    eprintln!("To obtain usage information about a command, call it and pass --help");
     eprintln!("as an argument.");
 }
 
@@ -92,6 +95,10 @@ fn do_dd(prog_name: &str, raw_args: &Vec<String>) -> i32 {
     opts.optopt("c", "count", "Number of bytes to copy.", "BYTES");
     opts.optopt("b", "block-size", "Size of each block in bytes when copying.", "BYTES");
     opts.optflag("C", "create-dest", "Allow creation of the destination file.");
+    opts.optflag("t", "truncate-dest", "Allow truncation of the destination file.");
+    opts.optflag("x", "src-excl", "Open source file with exclusive access.");
+    opts.optflag("X", "dest-excl", "Open destination file with exclusive access.");
+    opts.optflag("R", "dest-read", "Open destination file with read access in addition to write access.");
     let args_res = opts.parse(&raw_args[2..]);
     if args_res.is_err() {
         output_dd_usage(prog_name, &opts);
@@ -142,12 +149,23 @@ fn do_dd(prog_name: &str, raw_args: &Vec<String>) -> i32 {
     }
 
     let allow_create_dest = args.opt_present("C");
+    let truncate_dest = args.opt_present("t");
+    let src_excl = args.opt_present("x");
+    let dest_excl = args.opt_present("X");
+    let dest_read = args.opt_present("R");
 
     let source_path = args.free.get(0).unwrap();
     let dest_path = args.free.get(1).unwrap();
 
-    let source_file_res = OpenOptions::new()
-        .read(true)
+    let mut source_file_options = OpenOptions::new();
+    source_file_options
+        .read(true);
+    if cfg!(target_os = "windows") {
+        if src_excl {
+            source_file_options.share_mode(0);
+        }
+    }
+    let source_file_res = source_file_options
         .open(source_path);
     if let Err(err) = source_file_res {
         eprintln!("failed to open source file: {}", err);
@@ -162,10 +180,18 @@ fn do_dd(prog_name: &str, raw_args: &Vec<String>) -> i32 {
         }
     }
 
-    let dest_file_res = OpenOptions::new()
+    let mut dest_file_options = OpenOptions::new();
+    dest_file_options
+        .read(dest_read)
         .write(true)
-        .truncate(false)
-        .create(allow_create_dest)
+        .truncate(truncate_dest)
+        .create(allow_create_dest);
+    if cfg!(target_os = "windows") {
+        if dest_excl {
+            dest_file_options.share_mode(0);
+        }
+    }
+    let dest_file_res = dest_file_options
         .open(dest_path);
     if let Err(err) = dest_file_res {
         eprintln!("failed to open destination file: {}", err);
