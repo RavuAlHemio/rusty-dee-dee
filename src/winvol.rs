@@ -230,15 +230,15 @@ fn enumerate_object_path(path: &str) -> Result<Vec<DirectoryEntry>, IOError> {
 pub fn get_windows_disks() -> Result<Vec<String>, IOError> {
     let mut ret: Vec<String> = Vec::new();
 
-    let mut devs = enumerate_object_path("\\Device")?;
+    let mut devs = enumerate_object_path("\\??\\GLOBALROOT\\Device")?;
     devs.retain(|dev| dev.type_name == "Directory" && dev.name.starts_with("Harddisk"));
     for dev in devs {
-        let dev_path = format!("\\Device\\{}", dev.name);
+        let dev_path = format!("\\??\\GLOBALROOT\\Device\\{}", dev.name);
 
         let mut partitions = enumerate_object_path(&dev_path)?;
         partitions.retain(|pt| pt.name.starts_with("Partition"));
         for partition in partitions {
-            let part_path = format!("\\\\?\\GLOBALROOT\\Device\\{}\\{}", dev.name, partition.name);
+            let part_path = format!("\\??\\GLOBALROOT\\Device\\{}\\{}", dev.name, partition.name);
             ret.push(part_path);
         }
     }
