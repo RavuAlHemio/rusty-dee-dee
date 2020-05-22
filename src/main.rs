@@ -280,33 +280,6 @@ fn do_main() -> i32 {
         output_global_usage(&prog_name);
         1
     }
-
-    /*
-    let partition_res = File::open("\\\\.\\GLOBALROOT\\Device\\Harddisk1\\Partition0");
-    if let Err(err) = partition_res {
-        eprintln!("failed to open partition: {}", err);
-        return;
-    }
-    let partition = partition_res.unwrap();
-    let size_res = winvol::get_volume_size(&partition);
-    if let Err(err) = size_res {
-        eprintln!("failed to obtain size: {}", err);
-        return;
-    }
-    let size = size_res.unwrap();
-    println!("size: {}", size);
-
-    let vols_res = winvol::get_windows_volumes();
-    if let Err(err) = vols_res {
-        eprintln!("failed to enumerate volumes: {}", err);
-        return;
-    }
-    let vols = vols_res.unwrap();
-
-    for vol in vols {
-        println!("volume: {}", vol);
-    }
-    */
 }
 
 fn main() {
