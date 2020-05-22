@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::{Error as IOError, ErrorKind as IOErrorKind};
 use std::mem::{size_of, zeroed};
 use std::os::windows::io::{AsRawHandle, RawHandle};
-use std::ptr::{null_mut, read as ptr_read};
+use std::ptr::null_mut;
 use std::string::FromUtf16Error;
 
 use winapi::STRUCT;
@@ -38,6 +38,9 @@ STRUCT! {
         TypeName: UNICODE_STRING,
     }
 }
+
+#[repr(C, align(64))]
+struct ByteBufferAlign64([u8; 4096]);
 
 #[link(name = "ntdll")]
 extern "system" {
@@ -180,7 +183,7 @@ fn enumerate_object_path(path: &str) -> Result<Vec<DirectoryEntry>, IOError> {
     }
     let dir_handle = NtCloseHandle { handle: directory_handle };
 
-    let mut buf: [u8; 4096] = unsafe { zeroed() };
+    let mut buf = ByteBufferAlign64([0u8; 4096]);
     let mut context: ULONG = 0;
     let mut return_length: ULONG = 0;
     const RETURN_SINGLE_ENTRY: BOOLEAN = 1;
@@ -190,8 +193,8 @@ fn enumerate_object_path(path: &str) -> Result<Vec<DirectoryEntry>, IOError> {
         let status = unsafe {
             NtQueryDirectoryObject(
                 dir_handle.handle as PHANDLE,
-                buf.as_mut_ptr() as PVOID,
-                buf.len().try_into().unwrap(),
+                &mut buf as *mut ByteBufferAlign64 as PVOID,
+                buf.0.len().try_into().unwrap(),
                 RETURN_SINGLE_ENTRY,
                 DONT_RESTART_SCAN,
                 &mut context,
@@ -206,7 +209,7 @@ fn enumerate_object_path(path: &str) -> Result<Vec<DirectoryEntry>, IOError> {
 
         // interpret the struct
         let dir_info: OBJECT_DIRECTORY_INFORMATION = unsafe {
-            ptr_read(buf.as_ptr() as *const OBJECT_DIRECTORY_INFORMATION)
+            *(&buf as *const ByteBufferAlign64 as *const OBJECT_DIRECTORY_INFORMATION)
         };
         let name_res = UnicodeStringHolder::new_from_unicode_string(&dir_info.Name)
             .try_as_string();
