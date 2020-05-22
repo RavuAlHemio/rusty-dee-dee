@@ -37,7 +37,7 @@ fn output_dd_usage(prog_name: &str, opts: &Options) {
 }
 
 #[cfg(target_os = "windows")]
-fn do_list_windows(prog_name: &str, args: &Vec<String>) -> i32 {
+fn do_list_windows(prog_name: &str, args: &[String]) -> i32 {
     if args.len() != 2 {
         eprintln!("Usage: {} list", prog_name);
         return 1;
@@ -88,7 +88,7 @@ fn get_arg_num<T: FromStr>(matches: &Matches, arg: &str, default: T) -> Result<T
     T::from_str(&str_opt.unwrap())
 }
 
-fn do_dd(prog_name: &str, raw_args: &Vec<String>) -> i32 {
+fn do_dd(prog_name: &str, raw_args: &[String]) -> i32 {
     let mut opts = Options::new();
     opts.optopt("s", "src-skip", "Number of bytes to skip in the source file before copying.", "BYTES");
     opts.optopt("S", "dest-skip", "Number of bytes to skip in the destination file before copying.", "BYTES");
@@ -160,10 +160,8 @@ fn do_dd(prog_name: &str, raw_args: &Vec<String>) -> i32 {
     let mut source_file_options = OpenOptions::new();
     source_file_options
         .read(true);
-    if cfg!(target_os = "windows") {
-        if src_excl {
-            source_file_options.share_mode(0);
-        }
+    if cfg!(target_os = "windows") && src_excl {
+        source_file_options.share_mode(0);
     }
     let source_file_res = source_file_options
         .open(source_path);
@@ -186,10 +184,8 @@ fn do_dd(prog_name: &str, raw_args: &Vec<String>) -> i32 {
         .write(true)
         .truncate(truncate_dest)
         .create(allow_create_dest);
-    if cfg!(target_os = "windows") {
-        if dest_excl {
-            dest_file_options.share_mode(0);
-        }
+    if cfg!(target_os = "windows") && dest_excl {
+        dest_file_options.share_mode(0);
     }
     let dest_file_res = dest_file_options
         .open(dest_path);
@@ -251,10 +247,11 @@ fn do_dd(prog_name: &str, raw_args: &Vec<String>) -> i32 {
 
 fn do_main() -> i32 {
     let args: Vec<String> = env::args().collect();
-    let mut prog_name: String = "rusty-dee-dee".to_owned();
-    if args.len() > 0 {
-        prog_name = args.get(0).unwrap().to_owned();
-    }
+    let prog_name: String = if !args.is_empty() {
+        args.get(0).unwrap()
+    } else {
+        "rusty-dee-dee"
+    }.to_owned();
 
     if args.len() == 1 {
         output_global_usage(&prog_name);
