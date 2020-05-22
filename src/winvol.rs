@@ -106,7 +106,7 @@ impl UnicodeStringHolder {
     pub fn new_from_unicode_string(unistr: &UNICODE_STRING) -> UnicodeStringHolder {
         let byte_length: usize = unistr.Length.into();
         let char_length: isize = (byte_length / size_of::<u16>()).try_into().unwrap();
-        let mut backing: Vec<u16> = Vec::new();
+        let mut backing: Vec<u16> = Vec::with_capacity(char_length.try_into().unwrap());
         unsafe {
             for i in 0..char_length {
                 let c: u16 = *(unistr.Buffer.offset(i));
