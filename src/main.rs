@@ -149,7 +149,7 @@ fn do_main() -> i32 {
     let opts: Opts = match Opts::try_parse_from(args) {
         Ok(o) => o,
         Err(err) => {
-            print!("{}", err);
+            eprint!("{}", err);
             return 1;
         },
     };
