@@ -2,7 +2,7 @@ use clap::Clap;
 
 #[derive(Clap)]
 #[clap()]
-pub struct Opts {
+pub(crate) struct Opts {
     #[clap(subcommand)]
     pub subcmd: Subcommand,
 }
