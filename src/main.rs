@@ -146,12 +146,6 @@ fn do_dd(args: &DDOptions) -> i32 {
 
 fn do_main() -> i32 {
     let args: Vec<String> = env::args().collect();
-    let prog_name: String = if !args.is_empty() {
-        args.get(0).unwrap()
-    } else {
-        "rusty-dee-dee"
-    }.to_owned();
-
     let opts: Opts = match Opts::try_parse_from(args) {
         Ok(o) => o,
         Err(err) => {

@@ -1,4 +1,3 @@
-use std::fmt::{Display, Formatter, Error as FmtError};
 use clap::Clap;
 
 #[derive(Clap)]
