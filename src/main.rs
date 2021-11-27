@@ -12,7 +12,7 @@ use std::process::exit;
 #[cfg(target_os = "windows")]
 use std::os::windows::fs::OpenOptionsExt;
 
-use clap::derive::Clap;
+use clap::Parser;
 
 use crate::opts::{DDOptions, Opts, Subcommand};
 

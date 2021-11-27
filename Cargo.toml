@@ -2,9 +2,9 @@
 name = "rusty-dee-dee"
 version = "0.1.0"
 authors = ["Ondřej Hošek <ondra.hosek@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-clap = { version = "3.0.0-beta.1" }
+clap = { version = "3.0.0-beta.5" }
 winapi = { version = "0.3", features = ["errhandlingapi", "fileapi", "ioapiset", "winioctl"] }
-winreg = { version = "0.6" }
+winreg = { version = "0.10" }
