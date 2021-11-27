@@ -1,3 +1,8 @@
+mod opts;
+#[cfg(target_os = "windows")]
+mod winvol;
+
+
 use std::convert::TryInto;
 use std::env;
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -8,10 +13,6 @@ use std::process::exit;
 use std::os::windows::fs::OpenOptionsExt;
 
 use clap::derive::Clap;
-
-mod opts;
-#[cfg(target_os = "windows")]
-mod winvol;
 
 use crate::opts::{DDOptions, Opts, Subcommand};
 
@@ -113,12 +114,13 @@ fn do_dd(args: &DDOptions) -> i32 {
             remaining_bytes.try_into().unwrap()
         };
 
-        let read_count_res = source_file.read(&mut buf[0..count_to_read]);
-        if let Err(err) = read_count_res {
-            eprintln!("failed to read {} bytes from source file: {}", count_to_read, err);
-            return 1;
-        }
-        let read_count: usize = read_count_res.unwrap();
+        let read_count = match source_file.read(&mut buf[0..count_to_read]) {
+            Ok(rc) => rc,
+            Err(err) => {
+                eprintln!("failed to read {} bytes from source file: {}", count_to_read, err);
+                return 1;
+            },
+        };
         let read_count_u64: u64 = read_count.try_into().unwrap();
         remaining_bytes -= read_count_u64;
 
@@ -129,12 +131,13 @@ fn do_dd(args: &DDOptions) -> i32 {
             break;
         }
 
-        let write_count_res = dest_file.write(&buf[0..read_count]);
-        if let Err(err) = write_count_res {
-            eprintln!("failed to write {} bytes to destination file: {}", read_count, err);
-            return 1;
-        }
-        let write_count = write_count_res.unwrap();
+        let write_count = match dest_file.write(&buf[0..read_count]) {
+            Ok(wc) => wc,
+            Err(err) => {
+                eprintln!("failed to write {} bytes to destination file: {}", read_count, err);
+                return 1;
+            },
+        };
         if write_count != read_count {
             eprintln!("number of bytes read ({}) does not match number of bytes written ({})", read_count, write_count);
             return 1;
